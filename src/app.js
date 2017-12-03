@@ -10,6 +10,7 @@ import customizedLogger from './tool/customized-winston-logger'
 import jwt from 'jsonwebtoken'
 import fs from 'fs'
 import mongoose from 'mongoose'
+import { setInterval } from 'timers'
 // import PluginLoader from './lib/PluginLoader'
 
 const publicKey = fs.readFileSync(path.join(__dirname, '../publicKey.pub'))
@@ -25,11 +26,19 @@ mongoose.connection.on('error', console.error)
 // const env = process.env.NODE_ENV || 'development' // Current mode
 
 const wss = new WebSocket.Server({
-  host: 'localhost',
-  port: 8089,
+  host: SystemConfig.WEBSOCKET_server_host,
+  port: SystemConfig.WEBSOCKET_server_port,
   verifyClient: (info) => {
     const token = url.parse(info.req.url, true).query.token
-    var user = jwt.verify(token, publicKey)
+    let user
+
+    // 如果token过期会爆TokenExpiredError
+    try {
+      user = jwt.verify(token, publicKey)
+    } catch (e) {
+      return false
+    }
+
     // verify token and parse user object
     if (user) {
       info.req.user = user
@@ -49,8 +58,19 @@ function heartbeat () {
 wss.on('connection', function connection (ws, req) {
   const user = req.user
   console.log(user)
-
   ws.isAlive = true
+
+  // 测试聊天室用
+  let id = 0
+  setInterval(() => {
+    console.log('send chat test')
+    ws.send(JSON.stringify({
+      id: id,
+      content: '我是一个服务器端发出来的消息'
+    }))
+    id++
+  }, 1000)
+
   ws.on('pong', heartbeat)
 
   ws.on('message', function incoming (message) {
