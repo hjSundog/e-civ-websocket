@@ -47,6 +47,7 @@ gulp.task('ESlint_nodemon', ['ESlint'], function () {
       return []
     },
     verbose: true,
+    debug: true,
     ignore: ['build/*.js', 'dist/*.js', 'nodemon.json', '.git', 'node_modules/**/node_modules', 'gulpfile.js'],
     env: {
       NODE_ENV: 'development'

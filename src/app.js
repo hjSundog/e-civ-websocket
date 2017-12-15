@@ -1,17 +1,14 @@
-import {
-  System as SystemConfig,
-  DB as DBConfig
-} from './config'
-import path from 'path'
-import url from 'url'
-import WebSocket from 'ws'
-import customizedLogger from './tool/customized-winston-logger'
+const SystemConfig = require('./config').System
+const DBConfig = require('./config').DB
+const path = require('path')
+const url = require('url')
+const WebSocket = require('ws')
+const customizedLogger = require('./tool/customized-winston-logger')
 
-import jwt from 'jsonwebtoken'
-import fs from 'fs'
-import mongoose from 'mongoose'
-import { setInterval } from 'timers'
-// import PluginLoader from './lib/PluginLoader'
+const jwt = require('jsonwebtoken')
+const fs = require('fs')
+const mongoose = require('mongoose')
+const setInterval = require('timers').setInterval
 
 const publicKey = fs.readFileSync(path.join(__dirname, '../publicKey.pub'))
 
@@ -31,7 +28,7 @@ const wss = new WebSocket.Server({
   verifyClient: (info) => {
     const token = url.parse(info.req.url, true).query.token
     let user
-
+    console.log('start validate')
     // 如果token过期会爆TokenExpiredError
     try {
       user = jwt.verify(token, publicKey)
@@ -64,10 +61,15 @@ wss.on('connection', function connection (ws, req) {
   let id = 0
   setInterval(() => {
     console.log('send chat test')
-    ws.send(JSON.stringify({
-      id: id,
-      content: '我是一个服务器端发出来的消息'
-    }))
+    try {
+      ws.send(JSON.stringify({
+        id: id,
+        content: '我是一个服务器端发出来的消息'
+      }))
+    } catch (e) {
+      console.log(e)
+      ws.terminate()
+    }
     id++
   }, 1000)
 
