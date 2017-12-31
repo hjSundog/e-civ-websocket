@@ -3,6 +3,8 @@ const DBConfig = require('./config').DB
 const path = require('path')
 const url = require('url')
 const WebSocket = require('ws')
+const WebSocketWrapper = require('./wrapper/wrapper')
+const receiver = require('./receiver')
 const customizedLogger = require('./tool/customized-winston-logger')
 
 const jwt = require('jsonwebtoken')
@@ -53,37 +55,17 @@ function heartbeat () {
 }
 
 wss.on('connection', function connection (ws, req) {
+  ws = new WebSocketWrapper(ws)
+
   const user = req.user
   console.log(user)
   ws.isAlive = true
 
-  // 测试聊天室用
-  let id = 0
-  setInterval(() => {
-    console.log('send chat test')
-    try {
-      ws.send(JSON.stringify({
-        id: id,
-        content: '我是一个服务器端发出来的消息'
-      }))
-    } catch (e) {
-      console.log(e)
-      ws.terminate()
-    }
-    id++
-  }, 1000)
-
   ws.on('pong', heartbeat)
 
-  ws.on('message', function incoming (message) {
-    // 过滤心跳监测的信息
-    // TODO: 写一下逻辑分发
-    if (message === '@heart') {
-      return
-    }
-    logger.info('received: %s', message)
-    ws.send(`echo: ${message}`)
-  })
+  // message handler receiver
+  receiver.default(ws) // 主频道
+  receiver.chatChannels(ws) // 聊天分频道
 
   ws.on('close', function close () {
     logger.log('disconnected')

@@ -16,6 +16,7 @@
     "bcrypt": "^1.0.3",
     "chalk": "^2.3.0",
     "dateformat": "^3.0.2",
+    "eventemitter3": "^3.0.0",
     "jsonwebtoken": "^8.1.0",
     "koa": "^2.3.0",
     "koa-body": "^2.5.0",
