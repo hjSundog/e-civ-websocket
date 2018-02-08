@@ -16,7 +16,9 @@ const publicKey = fs.readFileSync(path.join(__dirname, '../publicKey.pub'))
 
 global.logger = customizedLogger
 
-mongoose.connect(DBConfig.url)
+mongoose.connect(DBConfig.url, {
+  useMongoClient: true
+})
 mongoose.connection.on('connected', () => {
   console.log('Mongoose connection open to ' + DBConfig.url)
 })
@@ -55,13 +57,18 @@ function heartbeat (data) {
   this.isAlive = true
 }
 
+wss.recieveTypes = {
+  'INVATATION': 'INVATATION',
+  'RADIO': 'RADIO'
+}
+
 wss.on('connection', function connection (ws, req) {
   ws.isAlive = true
   ws.on('pong', heartbeat)
 
   // 带来一定隐患，比如事件机制不一样。。。
   ws = new WebSocketWrapper(ws)
-
+  ws.invitators = new Set()
   const user = req.user
   console.log(user)
 
@@ -69,7 +76,48 @@ wss.on('connection', function connection (ws, req) {
   receiver.default(ws) // 主频道
   receiver.chatChannels(ws) // 聊天分频道
 
+  // 收到邀请交易请求
+  ws.on('message', function (message) {
+    console.log('mddzz: ' + message.data.type)
+    if (!message.data.type) {
+      console.log('init type: ' + message.data)
+      return
+    }
+    switch (message.data.type) {
+      case wss.recieveTypes.INVATATION :
+        wss.clients.forEach((client) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            if (client.name !== message.data.target) {
+              return
+            }
+            ws.invitators.add(client)
+            client.send(JSON.stringify(message.data))
+          }
+        })
+        break
+      case wss.recieveTypes.RADIO:
+        break
+      default:
+    }
+  })
+  // 这里模拟4个人['吕飞', 'lwio', 'break', 'inferno']发送邀请交易
+  let invators = ['吕飞', 'lwio', 'break', 'inferno']
+  let payloads = ['约不？', '哈哈', '大大大大', '一如既往的mdzz']
+  invators.forEach((nvt) => {
+    ws.send(JSON.stringify({
+      type: wss.recieveTypes.INVATATION,
+      target: 'me',
+      payload: payloads[Math.floor(Math.random() * payloads.length)]
+    }))
+  })
+
   ws.on('close', function close () {
+    ws.invitators.forEach((invitator) => {
+      invitator.send(JSON.stringify({
+        type: 'CANCELINVITATION',
+        payload: '我溜了哈哈'
+      }))
+    })
     logger.log('disconnected')
   })
 })
