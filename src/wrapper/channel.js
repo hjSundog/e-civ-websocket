@@ -3,12 +3,12 @@
 const EventEmitter = require('eventemitter3').EventEmitter
 
 /* A WebSocketChannel exposes an EventEmitter-like API for sending and handling
-	events or requests over the channel through the attached WebSocketWrapper.
+  events or requests over the channel through the attached WebSocketWrapper.
 
-	`var channel = new WebSocketChannel(name, socketWrapper);`
-		- `name` - the namespace for the channel
-		- `socketWrapper` - the WebSocketWrapper instance to which data should
-			be sent
+  `var channel = new WebSocketChannel(name, socketWrapper);`
+    - `name` - the namespace for the channel
+    - `socketWrapper` - the WebSocketWrapper instance to which data should
+      be sent
 */
 class WebSocketChannel {
   constructor (name, socketWrapper) {
@@ -23,18 +23,21 @@ class WebSocketChannel {
   }
 
   /* Expose EventEmitter-like API
-		When `eventName` is one of the `NO_WRAP_EVENTS`, the event handlers
-		are left untouched, and the emitted events are just sent to the
-		EventEmitter; otherwise, event listeners are wrapped to process the
-		incoming request and the emitted events are sent to the WebSocketWrapper
-		to be serialized and sent over the WebSocket. */
+    When `eventName` is one of the `NO_WRAP_EVENTS`, the event handlers
+    re left untouched, and the emitted events are just sent to the
+    EventEmitter; otherwise, event listeners are wrapped to process the
+    incoming request and the emitted events are sent to the WebSocketWrapper
+    to be serialized and sent over the WebSocket. */
 
   on (eventName, listener) {
-    if (this.name == null && WebSocketChannel.NO_WRAP_EVENTS.indexOf(eventName) >= 0)
+    if (this.name == null && WebSocketChannel.NO_WRAP_EVENTS.indexOf(eventName) >= 0) {
     /* Note: The following is equivalent to:
-					`this._emitter.on(eventName, listener.bind(this));`
-				But thanks to eventemitter3, the following is a touch faster. */
-    { this._emitter.on(eventName, listener, this) } else { this._emitter.on(eventName, this._wrapListener(listener)) }
+          `this._emitter.on(eventName, listener.bind(this));`
+        But thanks to eventemitter3, the following is a touch faster. */
+      this._emitter.on(eventName, listener, this)
+    } else {
+      this._emitter.on(eventName, this._wrapListener(listener))
+    }
     return this
   }
 
@@ -70,7 +73,11 @@ class WebSocketChannel {
 
   /* The following `emit` and `request` methods will serialize and send the event over the WebSocket using the WebSocketWrapper. */
   emit (eventName) {
-    if (this.name == null && WebSocketChannel.NO_WRAP_EVENTS.indexOf(eventName) >= 0) { return this._emitter.emit.apply(this._emitter, arguments) } else { return this._wrapper._sendEvent(this.name, eventName, arguments) }
+    if (this.name == null && WebSocketChannel.NO_WRAP_EVENTS.indexOf(eventName) >= 0) {
+      return this._emitter.emit.apply(this._emitter, arguments)
+    } else {
+      return this._wrapper._sendEvent(this.name, eventName, arguments)
+    }
   }
 
   /* Temporarily set the request timeout for the next request. */
@@ -98,19 +105,19 @@ class WebSocketChannel {
     if (!wrapped) {
       wrapped = function channelListenerWrapper (event) {
         /* This function is called when an event is emitted on this
-					WebSocketChannel's `_emitter` when the WebSocketWrapper
-					receives an incoming message for this channel.  If this
-					event is a request, special processing is needed to
-					send the response back over the socket.  Below we use
-					the return value from the original `listener` to
-					determine what response should be sent back.
+          WebSocketChannel's `_emitter` when the WebSocketWrapper
+          receives an incoming message for this channel.  If this
+          event is a request, special processing is needed to
+          send the response back over the socket.  Below we use
+          the return value from the original `listener` to
+          determine what response should be sent back.
 
-					`this` refers to the WebSocketChannel instance
-					`event` has the following properties:
-					- `name`
-					- `args`
-					- `requestId`
-				*/
+          `this` refers to the WebSocketChannel instance
+          `event` has the following properties:
+          - `name`
+          - `args`
+          - `requestId`
+        */
         try {
           var returnVal = listener.apply(this, event.args)
         } catch (err) {
@@ -125,7 +132,7 @@ class WebSocketChannel {
         }
         if (returnVal instanceof Promise) {
           /* If event listener returns a Promise, respond once
-						the Promise resolves */
+            the Promise resolves */
           returnVal
             .then((data) => {
               if (event.requestId >= 0) {
@@ -142,7 +149,7 @@ class WebSocketChannel {
             })
         } else if (event.requestId >= 0) {
           /* Otherwise, assume that the `returnVal` is what
-						should be passed back as the response */
+            should be passed back as the response */
           this._wrapper._sendResolve(
             event.requestId, returnVal)
         }

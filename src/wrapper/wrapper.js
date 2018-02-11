@@ -113,12 +113,12 @@ class WebSocketWrapper extends WebSocketChannel {
 
   get isConnecting () {
     return this.socket && this.socket.readyState ===
-			this.socket.constructor.CONNECTING
+      this.socket.constructor.CONNECTING
   }
 
   get isConnected () {
     return this.socket && this.socket.readyState ===
-			this.socket.constructor.OPEN
+      this.socket.constructor.OPEN
   }
 
   send (data, ignoreMaxQueueSize) {
@@ -126,7 +126,7 @@ class WebSocketWrapper extends WebSocketChannel {
       this._debug('wrapper: Sending message:', data)
       this.socket.send(data)
     } else if (ignoreMaxQueueSize ||
-			this._pendingSend.length < WebSocketWrapper.MAX_SEND_QUEUE_SIZE) {
+      this._pendingSend.length < WebSocketWrapper.MAX_SEND_QUEUE_SIZE) {
       this._debug('wrapper: Queuing message:', data)
       this._pendingSend.push(data)
     } else {
@@ -152,9 +152,9 @@ class WebSocketWrapper extends WebSocketChannel {
         msg.a = argsArray
       }
       /* If `msg` does not have an `a` Array with at least 1 element,
-				ignore the message because it is not a valid event/request */
+        ignore the message because it is not a valid event/request */
       if (msg.a instanceof Array && msg.a.length >= 1 &&
-				(msg.c || WebSocketChannel.NO_WRAP_EVENTS.indexOf(msg.a[0]) < 0)) {
+        (msg.c || WebSocketChannel.NO_WRAP_EVENTS.indexOf(msg.a[0]) < 0)) {
         // Process inbound event/request
         var event = {
           'name': msg.a.shift(),
@@ -169,19 +169,19 @@ class WebSocketWrapper extends WebSocketChannel {
             ))
           }
           this._debug(`wrapper: Event '${event.name}' ignored ` +
-							`because channel '${msg.c}' does not exist.`)
+              `because channel '${msg.c}' does not exist.`)
         } else if (channel._emitter.emit(event.name, event)) {
           this._debug(`wrapper: Event '${event.name}' sent to ` +
-						'event listener')
+            'event listener')
         } else {
           if (msg.i >= 0) {
             this._sendReject(msg.i, new Error(
               "No event listener for '" + event.name + "'" +
-							(msg.c ? " on channel '" + msg.c + "'" : '')
+              (msg.c ? " on channel '" + msg.c + "'" : '')
             ))
           }
           this._debug(`wrapper: Event '${event.name}' had no ` +
-						'event listener')
+            'event listener')
         }
       } else if (this._pendingRequests[msg.i]) {
         this._debug('wrapper: Processing response for request', msg.i)
@@ -207,12 +207,12 @@ class WebSocketWrapper extends WebSocketChannel {
     } catch (e) {
       // Non-JSON messages are ignored
       /* Note: It's also possible for uncaught exceptions from event
-				handlers to end up here. */
+        handlers to end up here. */
     }
   }
 
   /* The following methods are called by a WebSocketChannel to send data
-		to the Socket. */
+    to the Socket. */
   _sendEvent (channel, eventName, args, isRequest) {
     // Serialize data for sending over the socket
     var data = {'a': args}
@@ -222,7 +222,7 @@ class WebSocketWrapper extends WebSocketChannel {
     var request
     if (isRequest) {
       /* Unless we send petabytes of data using the same socket,
-				we won't worry about `_lastRequestId` getting too big. */
+        we won't worry about `_lastRequestId` getting too big. */
       data.i = ++this._lastRequestId
       // Return a Promise to the caller to be resolved later
       request = new Promise((resolve, reject) => {
@@ -273,8 +273,8 @@ class WebSocketWrapper extends WebSocketChannel {
 }
 
 /* Maximum number of items in the send queue.  If a user tries to send more
-	messages than this number while a WebSocket is not connected, errors will
-	be thrown. */
+  messages than this number while a WebSocket is not connected, errors will
+  be thrown. */
 WebSocketWrapper.MAX_SEND_QUEUE_SIZE = 10
 
 module.exports = WebSocketWrapper
