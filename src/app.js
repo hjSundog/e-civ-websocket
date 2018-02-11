@@ -27,6 +27,7 @@ mongoose.connection.on('error', console.error)
 const wss = new WebSocket.Server({
   host: SystemConfig.WEBSOCKET_server_host,
   port: SystemConfig.WEBSOCKET_server_port,
+  // 验证token识别身份
   verifyClient: (info) => {
     const token = url.parse(info.req.url, true).query.token
     let user
@@ -50,18 +51,19 @@ const wss = new WebSocket.Server({
 })
 
 // 心跳监测监测连接断连
-function heartbeat () {
+function heartbeat (data) {
   this.isAlive = true
 }
 
 wss.on('connection', function connection (ws, req) {
+  ws.isAlive = true
+  ws.on('pong', heartbeat)
+
+  // 带来一定隐患，比如事件机制不一样。。。
   ws = new WebSocketWrapper(ws)
 
   const user = req.user
   console.log(user)
-  ws.isAlive = true
-
-  ws.on('pong', heartbeat)
 
   // message handler receiver
   receiver.default(ws) // 主频道
@@ -70,8 +72,6 @@ wss.on('connection', function connection (ws, req) {
   ws.on('close', function close () {
     logger.log('disconnected')
   })
-
-  ws.send('connect start')
 })
 
 setInterval(function ping () {
@@ -83,6 +83,6 @@ setInterval(function ping () {
     }
 
     ws.isAlive = false
-    ws.ping('', false, true)
+    ws.ping('ping', false, false)
   })
-}, 3000)
+}, 5000)
