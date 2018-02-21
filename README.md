@@ -31,4 +31,20 @@ Websocket消息结构
   "created_at": "2018-02-11T15:02:21.760Z" // 消息创建时间
 }
 
+// 交易数据结构
+// 客户端
+{
+  "uuid": "uasd-qwor", // 唯一标识，可能会有用
+  "source": {}, // 请求来源对象信息
+  "target": "", // 可以是uuid之类的
+  "type": "INVITATION", // 消息类型
+  "data": { // 消息数据
+    "message": "留言",
+    "operation": "trade/invite/close/refuse",
+  },
+  "created_at": "2018-02-11T15:02:21.760Z" // 消息创建时间  
+}
+// 服务器端
+
+
 ```
