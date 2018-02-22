@@ -99,13 +99,14 @@ function heartbeat (data) {
 wss.on('connection', function connection (ws, req) {
   ws.isAlive = true
   ws.on('pong', heartbeat)
+  // 使用用户名来区分websocket，这点很重要
   ws.name = req.user.name
   // ws.uuid = 'me' // uuid.v4()
   // 带来一定隐患，比如事件机制不一样。。。
   ws = new WebSocketWrapper(ws)
-  // invites 发起的的邀请者
+  // invites 自己发起的的邀请对象数组,用于管理邀请求
   ws.inviters = []
-  // invited 被邀请者
+  // invited 邀请自己的用户数组，用于决定是否回应邀请者
   ws.invitees = []
   const user = req.user
   console.log(user)

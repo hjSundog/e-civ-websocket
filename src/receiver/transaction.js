@@ -12,7 +12,7 @@ module.exports = function (ws, wss, WebSocket) {
         case 'invite': {
           wss.clients.forEach((client) => {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
-              if (client.name !== tMessage.target) {
+              if (client.name !== tMessage.to) {
                 return
               }
               ws.invitees.push(client)
@@ -21,13 +21,26 @@ module.exports = function (ws, wss, WebSocket) {
           })
           break
         }
-        case 'refuse': {
-          // ws.invitees.forEach((client) => {
-          //   if (client.uuid !== tMessage.target) {
-          //     return
-          //   }
-
-          // })
+        case 'refuse':
+        case 'receive': {
+          wss.clients.forEach((client) => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+              if (client.name !== tMessage.to) {
+                return
+              }
+              client.send(JSON.stringify(tMessage))
+            }
+          })
+          break
+        }
+        case 'cancle': {
+          const index = ws.invitees.findIndex((invitee) => {
+            if (invitee.name === tMessage.to) {
+              invitee.send(JSON.stringify(tMessage))
+              return true
+            }
+          })
+          ws.invitees.splice(index, 1)
           break
         }
         case 'close': {
@@ -45,12 +58,13 @@ module.exports = function (ws, wss, WebSocket) {
   ws.on('close', function close () {
     ws.inviters.forEach((inviter) => {
       inviter.send(JSON.stringify({
+        from: ws.name,
         souce: {
           invator: 'mdzsz',
           level: 10
         },
         type: 'invitation',
-        target: 'me',
+        to: 'me',
         data: {
           message: '挂了挂了',
           operation: 'close'
