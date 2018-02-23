@@ -12,7 +12,7 @@ module.exports = function (ws, wss, WebSocket) {
         case 'invite': {
           wss.clients.forEach((client) => {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
-              if (client.name !== tMessage.to) {
+              if (client.name !== tMessage.data.to) {
                 return
               }
               ws.invitees.push(client)
@@ -25,7 +25,7 @@ module.exports = function (ws, wss, WebSocket) {
         case 'receive': {
           wss.clients.forEach((client) => {
             if (client !== ws && client.readyState === WebSocket.OPEN) {
-              if (client.name !== tMessage.to) {
+              if (client.name !== tMessage.data.to) {
                 return
               }
               client.send(JSON.stringify(tMessage))
@@ -35,7 +35,7 @@ module.exports = function (ws, wss, WebSocket) {
         }
         case 'cancle': {
           const index = ws.invitees.findIndex((invitee) => {
-            if (invitee.name === tMessage.to) {
+            if (invitee.name === tMessage.data.to) {
               invitee.send(JSON.stringify(tMessage))
               return true
             }
@@ -58,14 +58,15 @@ module.exports = function (ws, wss, WebSocket) {
   ws.on('close', function close () {
     ws.inviters.forEach((inviter) => {
       inviter.send(JSON.stringify({
-        from: ws.name,
-        souce: {
-          invator: 'mdzsz',
-          level: 10
-        },
+        souce: 'person',
         type: 'invitation',
-        to: 'me',
         data: {
+          payload: {
+            invator: 'mdzsz',
+            level: 10
+          },
+          from: ws.name,
+          to: 'admin',
           message: '挂了挂了',
           operation: 'close'
         },

@@ -35,24 +35,18 @@ Websocket消息结构
 // 客户端
 {
   "uuid": "uasd-qwor", // 唯一标识，可能会有用
-  "from": "auth.user.name",
-  "source": {}, // 请求来源对象信息
-  "to": "", // username
+  "source": "person", // 请求来源对象信息
   "type": "INVITATION", // 消息类型
   "data": { // 消息数据
+    "from": "auth.user.name",
+    "to": "",
+    "payload": {},
     "message": "留言",
-    "operation": "trade/invite/close/refuse",
+    "operation": "trade/invite/close/refuse/receive/cancle",
   },
   "created_at": "2018-02-11T15:02:21.760Z" // 消息创建时间  
 }
-// 服务器端
-{
-  "target": "",
-  "data": {
-    "operation": "",
-    "message": ""
-  }
-}
+
 
 // 数据结构变化
 // forEach 的优化
