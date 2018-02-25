@@ -96,6 +96,8 @@ function heartbeat (data) {
   this.isAlive = true
 }
 
+wss.tradeMap = new Map()
+
 wss.on('connection', function connection (ws, req) {
   ws.isAlive = true
   ws.on('pong', heartbeat)

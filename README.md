@@ -40,7 +40,9 @@ Websocket消息结构
   "data": { // 消息数据
     "from": "auth.user.name",
     "to": "",
-    "payload": {},
+    "payload": {}, // 考虑不周，这里放用户信息
+    "items": [],  // 交易物品
+    "extra": [],  // 额外的物品，比如补偿金币
     "message": "留言",
     "operation": "trade/invite/close/refuse/receive/cancle",
   },
