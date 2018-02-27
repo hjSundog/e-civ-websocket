@@ -41,10 +41,13 @@ Websocket消息结构
     "from": "auth.user.name",
     "to": "",
     "payload": {}, // 考虑不周，这里放用户信息
-    "items": [],  // 交易物品
+    "items": [
+      // "item": "",
+      // "count": "",
+    ],  // 交易物品
     "extra": [],  // 额外的物品，比如补偿金币
     "message": "留言",
-    "operation": "trade/invite/close/refuse/receive/cancle",
+    "operation": "trade/trading/invite/close/refuse/receive/cancle",
   },
   "created_at": "2018-02-11T15:02:21.760Z" // 消息创建时间  
 }

@@ -57,6 +57,7 @@ module.exports = function (ws, wss, WebSocket) {
           if (wss.tradeMap[toFrom]) {
             // 对方已经应答
             wss.tradeMap[toFrom] = {
+              ...wss.tradeMap[toFrom],
               [from]: {
                 items: tMessage.data.items,
                 extra: tMessage.data.extra
@@ -68,8 +69,20 @@ module.exports = function (ws, wss, WebSocket) {
                 if (client.name !== tMessage.data.to && client.name !== tMessage.data.from) {
                   return
                 }
-                console.log('send data to:--> ' + client.name)
-                client.send(JSON.stringify(wss.tradeMap[toFrom][client.name]))
+                const data = wss.tradeMap[toFrom][client.name]
+                const sendData = {
+                  source: 'preson',
+                  type: 'INVITATION',
+                  data: {
+                    from: client.name === from ? to : from,
+                    to: client.name,
+                    items: data.items,
+                    extra: data.extra,
+                    operation: 'trade'
+                  },
+                  created_at: new Date().toLocaleDateString()
+                }
+                client.send(JSON.stringify(sendData))
               }
             })
           } else {
@@ -80,8 +93,18 @@ module.exports = function (ws, wss, WebSocket) {
               }
             }
           }
-
-
+          break
+        }
+        // 一端操作背包时将该数据实时显示到另一端
+        case 'trading': {
+          wss.clients.forEach((client) => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+              if (client.name !== tMessage.data.to) {
+                return
+              }
+              client.send(JSON.stringify(tMessage))
+            }
+          })
           break
         }
         case 'close': {
