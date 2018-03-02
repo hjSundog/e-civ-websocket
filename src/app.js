@@ -97,6 +97,55 @@ function heartbeat (data) {
 }
 
 wss.tradeMap = new Map()
+// 这里先在服务器存储拍卖物品，以后使用TTL在moongodb中设置结束时间即可
+// item JSON :
+// {
+//   name:"",
+//   owner_id: '',
+//   type: '',
+//   icon: '',
+//   details: {
+
+//   }
+//   startTime: 0,
+//   endTime: 0,
+// }
+wss.auctionItems = {
+  '1527782400000': [
+  {
+    id: '1519973840193@张珊珊',
+    item: {
+      name: '白菜'
+    },
+    count: 1,
+    startTime: 1519973840193,
+    endTime: 1527782400000,
+    from: {
+      payload: {
+        name: '张珊珊',
+        level: 13
+      },
+      price: 32
+    }
+  },
+  {
+    id: '1519973843993@宋丹丹',
+    item: {
+      name: '牛肉'
+    },
+    count: 1,
+    startTime: 1519973843993,
+    endTime: 1527782400000,
+    from: {
+      payload: {
+        name: '宋丹丹',
+        level: 45
+      },
+      price: 32
+    }
+  }
+]
+}
 
 wss.on('connection', function connection (ws, req) {
   ws.isAlive = true
@@ -117,6 +166,7 @@ wss.on('connection', function connection (ws, req) {
   receiver.default(ws) // 主频道
   receiver.chatChannels(ws) // 聊天分频道
   receiver.transaction(ws, wss, WebSocket) // 交易处理
+  receiver.auction(wss, wss, WebSocket) // 拍卖处理
 })
 
 setInterval(function ping () {

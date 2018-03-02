@@ -52,6 +52,52 @@ Websocket消息结构
   "created_at": "2018-02-11T15:02:21.760Z" // 消息创建时间  
 }
 
+// 拍卖数据结构 c-s
+{
+  "source": "person",
+  "type": "AUCTION",
+  "data": {
+    "from": "",
+    "payload": {}, // 用户信息
+    "auctionItem": {
+      // 拍卖//获得物品
+      "item": {},
+      "count": 1,
+      // 只有拍卖才有
+      "startTime": new Date(),
+      "endTime": new Date(),
+      // 竞标
+      "price": 88
+    },
+    "message": "可以私聊"
+    "operation": "sell/sold/makingBid/"
+  },
+  "created_at": ""
+
+}
+
+// s-c
+{
+  "source": "system",
+  "type": "AUCTION",
+  "data": {
+    "payload": {}, // 用户信息
+    "auctionItem": {
+      // 拍卖//获得物品
+      "item": {},
+      "count": 1,
+      // 只有拍卖才有
+      "startTime": new Date(),
+      "endTime": new Date(),
+      // 竞标
+      "price": 88
+    },
+    "message": "可以私聊",
+    "operation": "sell/sold/makingBid/error"
+  },
+  "created_at": ""
+}
+
 
 // 数据结构变化
 // forEach 的优化
