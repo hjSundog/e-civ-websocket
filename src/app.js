@@ -72,10 +72,10 @@ const wss = new WebSocket.Server({
   verifyClient: (info) => {
     const token = url.parse(info.req.url, true).query.token
     let user
-    console.log('start validate')
     // 如果token过期会爆TokenExpiredError
     try {
       user = jwt.verify(token, publicKey)
+      console.log(user.name + ' validate!')
     } catch (e) {
       return false
     }

@@ -69,7 +69,7 @@ Websocket消息结构
       // 竞标
       "price": 88
     },
-    "message": "可以私聊"
+    "message": "可以私聊",
     "operation": "sell/sold/makingBid/"
   },
   "created_at": ""

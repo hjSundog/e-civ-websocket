@@ -43,6 +43,21 @@ module.exports = function (ws, wss, WebSocket) {
           ws.invitees.splice(index, 1)
           break
         }
+        case 'search': {
+          let arr = []
+          if (tMessage.data.to) {
+            wss.clients.forEach((client) => {
+              if (client !== ws && client.readyState === WebSocket.OPEN) {
+                if (client.name.match(tMessage.data.to) !== null) {
+                  arr.push(client.name)
+                }
+              }
+            })
+          }
+          tMessage.data.to = arr
+          ws.send(JSON.stringify(tMessage))
+          break
+        }
         case 'trade': {
           // 有两种考虑：1，客户端维持一个是否已经发起交易请求的状态，服务器将数据发送至客户端检查该状态，如果发起了，才表示交易成功，
           // 2.服务器为每个交易维护一个Set集
