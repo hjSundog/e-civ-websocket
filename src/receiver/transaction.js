@@ -43,6 +43,7 @@ module.exports = function (ws, wss, WebSocket) {
           ws.invitees.splice(index, 1)
           break
         }
+        // 搜索其他在线用户
         case 'search': {
           let arr = []
           if (tMessage.data.to) {
@@ -58,18 +59,17 @@ module.exports = function (ws, wss, WebSocket) {
           ws.send(JSON.stringify(tMessage))
           break
         }
-        case 'trade': {
-          // 有两种考虑：1，客户端维持一个是否已经发起交易请求的状态，服务器将数据发送至客户端检查该状态，如果发起了，才表示交易成功，
-          // 2.服务器为每个交易维护一个Set集
-          // 这里采用第二种方法吧：
-
-          // 获取客户端来的数据
+        // 确定是否交易
+        case 'confirm': {
           const from = tMessage.data.from
           const to = tMessage.data.to
           // 考虑搞个算法，只要生成字符串是相通的，返回值也相同，不这样颠倒判断
           const fromTo = `${from}@${to}`
           const toFrom = `${to}@${from}`
           if (wss.tradeMap[toFrom]) {
+            // 进行数据库操作
+            // const one = wss.tradeMap[toFrom][from] // the last confirm
+            // const two = wss.tradeMap[toFrom][to] // the first confirm
             // 对方已经应答
             wss.tradeMap[toFrom] = {
               ...wss.tradeMap[toFrom],
@@ -78,13 +78,77 @@ module.exports = function (ws, wss, WebSocket) {
                 extra: tMessage.data.extra
               }
             }
+            // 分别给两方发送确定消息
+            wss.clients.forEach((client) => {
+              if (client !== ws && client.readyState === WebSocket.OPEN) {
+                if (client.name !== tMessage.data.to && client.name !== tMessage.data.from) {
+                  return
+                }
+                const sendData = {
+                  source: 'preson',
+                  type: 'INVITATION',
+                  data: {
+                    from: client.name === from ? to : from,
+                    to: client.name,
+                    operation: 'confirm',
+                    message: '确不确定啊，这笔交易很好的！'
+                  },
+                  created_at: new Date().toLocaleDateString()
+                }
+                client.send(JSON.stringify(sendData))
+              }
+            })
+          } else {
+            wss.tradeMap[fromTo] = {
+              [from]: {
+                items: tMessage.data.items,
+                extra: tMessage.data.extra
+              }
+            }
+          }
+          break
+        }
+        // 确定过程中一方不同意交易，交易挂起
+        case 'hang_up': {
+          const from = tMessage.data.from
+          const to = tMessage.data.to
+          // 考虑搞个算法，只要生成字符串是相通的，返回值也相同，不这样颠倒判断
+          const fromTo = `${from}@${to}`
+          const toFrom = `${to}@${from}`
+          if (wss.confirmMap.has(fromTo)) {
+            wss.confirmMap.delete(fromTo)
+          }
+
+          if (wss.confirmMap.has(toFrom)) {
+            wss.confirmMap.delete(toFrom)
+          }
+          // 发送取消交易消息
+          wss.clients.forEach((client) => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+              if (client.name !== tMessage.data.to) {
+                return
+              }
+              client.send(JSON.stringify(tMessage))
+            }
+          })
+          break
+        }
+        case 'trade': {
+          // 获取客户端来的数据
+          const from = tMessage.data.from
+          const to = tMessage.data.to
+          // 考虑搞个算法，只要生成字符串是相通的，返回值也相同，不这样颠倒判断
+          const fromTo = `${from}@${to}`
+          const toFrom = `${to}@${from}`
+          if (wss.confirmMap[toFrom]) {
+            // 对方已经应答
             // 分别给两方发送结果
             wss.clients.forEach((client) => {
               if (client !== ws && client.readyState === WebSocket.OPEN) {
                 if (client.name !== tMessage.data.to && client.name !== tMessage.data.from) {
                   return
                 }
-                const data = wss.tradeMap[toFrom][client.name]
+                const data = wss.confirmMap[toFrom][client.name]
                 const sendData = {
                   source: 'preson',
                   type: 'INVITATION',
@@ -100,13 +164,11 @@ module.exports = function (ws, wss, WebSocket) {
                 client.send(JSON.stringify(sendData))
               }
             })
+            // 清除
+            wss.confirmMap.delete(toFrom)
+            wss.tradeMap.delete(toFrom)
           } else {
-            wss.tradeMap[fromTo] = {
-              [from]: {
-                items: tMessage.data.items,
-                extra: tMessage.data.extra
-              }
-            }
+            wss.confirmMap[fromTo] = wss.tradeMap[fromTo]
           }
           break
         }

@@ -97,6 +97,7 @@ function heartbeat (data) {
 }
 
 wss.tradeMap = new Map()
+wss.confirmMap = new Map()
 // 这里先在服务器存储拍卖物品，以后使用TTL在moongodb中设置结束时间即可
 // item JSON :
 // {
