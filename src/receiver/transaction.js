@@ -1,3 +1,8 @@
+function createUniqueKey(one, two) {
+  let arr = [one, two]
+  return arr.sort().join('@')
+}
+
 module.exports = function (ws, wss, WebSocket) {
   // 收到邀请交易请求,将该对象加入被邀请组中
   // ws-wrapper之后client永远不可能等于ws
@@ -64,15 +69,14 @@ module.exports = function (ws, wss, WebSocket) {
           const from = tMessage.data.from
           const to = tMessage.data.to
           // 考虑搞个算法，只要生成字符串是相通的，返回值也相同，不这样颠倒判断
-          const fromTo = `${from}@${to}`
-          const toFrom = `${to}@${from}`
-          if (wss.tradeMap[toFrom]) {
+          const tKey = createUniqueKey(from, to)
+          if (wss.tradeMap[tKey]) {
             // 进行数据库操作
             // const one = wss.tradeMap[toFrom][from] // the last confirm
             // const two = wss.tradeMap[toFrom][to] // the first confirm
             // 对方已经应答
-            wss.tradeMap[toFrom] = {
-              ...wss.tradeMap[toFrom],
+            wss.tradeMap[tKey] = {
+              ...wss.tradeMap[tKey],
               [from]: {
                 items: tMessage.data.items,
                 extra: tMessage.data.extra
@@ -99,7 +103,7 @@ module.exports = function (ws, wss, WebSocket) {
               }
             })
           } else {
-            wss.tradeMap[fromTo] = {
+            wss.tradeMap[tKey] = {
               [from]: {
                 items: tMessage.data.items,
                 extra: tMessage.data.extra
@@ -113,14 +117,9 @@ module.exports = function (ws, wss, WebSocket) {
           const from = tMessage.data.from
           const to = tMessage.data.to
           // 考虑搞个算法，只要生成字符串是相通的，返回值也相同，不这样颠倒判断
-          const fromTo = `${from}@${to}`
-          const toFrom = `${to}@${from}`
-          if (wss.confirmMap.has(fromTo)) {
-            wss.confirmMap.delete(fromTo)
-          }
-
-          if (wss.confirmMap.has(toFrom)) {
-            wss.confirmMap.delete(toFrom)
+          const tKey = createUniqueKey(from, to)
+          if (wss.confirmMap.has(tKey)) {
+            wss.confirmMap.delete(tKey)
           }
           // 发送取消交易消息
           wss.clients.forEach((client) => {
@@ -137,10 +136,8 @@ module.exports = function (ws, wss, WebSocket) {
           // 获取客户端来的数据
           const from = tMessage.data.from
           const to = tMessage.data.to
-          // 考虑搞个算法，只要生成字符串是相通的，返回值也相同，不这样颠倒判断
-          const fromTo = `${from}@${to}`
-          const toFrom = `${to}@${from}`
-          if (wss.confirmMap[toFrom]) {
+          const tKey = createUniqueKey(from, to)
+          if (wss.confirmMap[tKey]) {
             // 对方已经应答
             // 分别给两方发送结果
             wss.clients.forEach((client) => {
@@ -148,7 +145,7 @@ module.exports = function (ws, wss, WebSocket) {
                 if (client.name !== tMessage.data.to && client.name !== tMessage.data.from) {
                   return
                 }
-                const data = wss.confirmMap[toFrom][client.name]
+                const data = wss.confirmMap[tKey][client.name]
                 const sendData = {
                   source: 'preson',
                   type: 'INVITATION',
@@ -165,10 +162,10 @@ module.exports = function (ws, wss, WebSocket) {
               }
             })
             // 清除
-            wss.confirmMap.delete(toFrom)
-            wss.tradeMap.delete(toFrom)
+            wss.confirmMap.delete(tKey)
+            wss.tradeMap.delete(tKey)
           } else {
-            wss.confirmMap[fromTo] = wss.tradeMap[fromTo]
+            wss.confirmMap[tKey] = wss.tradeMap[tKey]
           }
           break
         }
