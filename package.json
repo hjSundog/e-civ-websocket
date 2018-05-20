@@ -18,6 +18,7 @@
     "dateformat": "^3.0.2",
     "eventemitter3": "^3.0.0",
     "jsonwebtoken": "^8.1.0",
+    "kafka-node": "^2.6.1",
     "koa": "^2.3.0",
     "koa-body": "^2.5.0",
     "koa-compose": "^4.0.0",

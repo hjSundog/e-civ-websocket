@@ -11,6 +11,7 @@ const jwt = require('jsonwebtoken')
 const fs = require('fs')
 const mongoose = require('mongoose')
 const setInterval = require('timers').setInterval
+const kafka = require('kafka-node')
 
 const publicKey = fs.readFileSync(path.join(__dirname, '../publicKey.pub'))
 
@@ -24,46 +25,21 @@ mongoose.connection.on('connected', () => {
 })
 mongoose.connection.on('error', console.error)
 
-// const env = process.env.NODE_ENV || 'development' // Current mode
+const client = new kafka.KafkaClient()
+const Consumer = kafka.Consumer
+const consumer = new Consumer(client, [
+  { topic: 'websocket-api', partition: 0 }
+], {
+  autoCommit: false, fetchMaxWaitMs: 1000, fetchMaxBytes: 1024 * 1024
+})
 
-// const payloads = [{
-//   meta: {
-//     age: 21,
-//     sex: 'male'
-//   },
-//   name: '3',
-//   person_id: null,
-//   username: '3'
-// }, {
-//   meta: {
-//     age: 21,
-//     sex: 'male'
-//   },
-//   name: '2',
-//   person_id: null,
-//   username: '2'
-// }, {
-//   meta: {
-//     age: 21,
-//     sex: 'male'
-//   },
-//   name: '5',
-//   person_id: null,
-//   username: '5'
-// }, {
-//   meta: {
-//     age: 21,
-//     sex: 'male'
-//   },
-//   name: '6',
-//   person_id: null,
-//   username: '6'
-// }]
+consumer.on('message', function (message) {
+  console.log('kafka message: ', message)
+})
 
-// let rt = payloads.map(payload => {
-//   return jwt.sign(payload, publicKey)
-// })
-// console.log(rt)
+consumer.on('error', function (err) {
+  console.log('kafka error: ', err)
+})
 
 const wss = new WebSocket.Server({
   host: SystemConfig.WEBSOCKET_server_host,
